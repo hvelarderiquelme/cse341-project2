@@ -1,0 +1,89 @@
+### Test 1: Get ALL books
+GET http://localhost:8080/books
+
+###
+
+### Test 2: Get a SINGLE book 
+GET http://localhost:8080/books/6a55422ae85a3ba08d6ff85f
+
+### Test 3: Get ALL teams
+GET http://localhost:8080/teams
+
+###
+
+### Test 4: Get a SINGLE team 
+GET http://localhost:8080/teams/6a551d13cd1b72630dbfbf1f
+
+
+### Test 5: Create a New Book record (Success Case)
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{
+  "title": "Dune",
+  "author": "Frank Herbert",
+  "published_year": 1965,
+  "genres": ["Sci-Fi", "Adventure", "Epic"],
+  "isbn": "9780441172719",
+  "stock": {
+    "available": 14,
+    "location": "Aisle 5"
+  }
+}
+
+### Test 6: Create a New Team record (Success Case)
+POST http://localhost:8080/teams
+Content-Type: application/json
+
+{
+  "team_name": "Egypt",
+  "country_code": "EGY",
+  "confederation": "CAF",
+  "rank": 24,
+  "stats": {
+    "points": 1597.04,
+    "previous_rank": 29
+  },
+  "key_players": ["Mohamed Salah", "Omar Marmoush", "Mostafa Mohamed"],
+  "active": true
+}
+
+
+
+### Test 7: update existing Book
+PUT http://localhost:8080/books/6a55422ae85a3ba08d6ff85f
+Content-Type: application/json
+
+{
+  "title": "Dune",
+  "author": "Frank Herbert",
+  "published_year": 1965,
+  "genres": ["Sci-Fi", "Adventure", "Epic"],
+  "isbn": "9780441172719",
+  "stock": {
+    "available": 5,
+    "location": "Aisle 5"
+  }
+}
+
+### Test 8 Update an existing Team
+PUT http://localhost:8080/teams/6a55470134e53ff776e00843
+Content-Type: application/json
+
+{
+  "team_name": "Russia",
+  "country_code": "CRO",
+  "confederation": "UEFA",
+  "rank": 11,
+  "stats": {
+    "points": 1714.87,
+    "previous_rank": 10
+  },
+  "key_players": ["Romario", "Joško Gvardiol", "Mateo Kovačić"],
+  "active": true
+}
+### Test 9: delete existing Book
+DELETE http://localhost:8080/books/6a55422ae85a3ba08d6ff85f
+
+### Test 10: delete existing Team
+DELETE http://localhost:8080/teams/6a55467634ee628b33e20582
