@@ -1,6 +1,7 @@
 const express = require('express');
 const {ObjectId} = require('mongodb');
 const{getCollection} = require('../config/db');
+const {validateTeam} = require('../middleware/validateTeam');
 const router = express.Router();
 
 
@@ -149,27 +150,19 @@ router.get('/:id', async (req, res) => {
  *       500:
  *         description: Database insertion failed.
  */
-router.post('/', async(req,res) => {
-    const {team_name, country_code, confederation, rank, stats, key_players, active} = req.body;
-
-    //Validate input
-    if(!team_name || !country_code || !confederation || !rank || !stats || !key_players || !active){
-        return res.status(400).json({
-            error: 'All fields (team_name, country_code, confederation, rank, stats, key_players, active) are required.'
-        });
-    }
-
+router.post('/', validateTeam, async(req,res) => {
+    
     try {
         //calls the teams collection
         const teamsCollection = getCollection('fifa_teams');
-        //Assemble the new document
-        const newTeam= { team_name, country_code, confederation, rank, stats, key_players, active};
+        // //Assemble the new document
+        // const newTeam= { team_name, country_code, confederation, rank, stats, key_players, active};
         //inserts the new document in the MongoDB collection
-        const result = await teamsCollection.insertOne(newTeam);
+        const result = await teamsCollection.insertOne(req.body);
         //returns the id of the new document
         return res.status(201).json({ 
              message: 'A new team record has been created',
-             id: newTeam._id
+             id: result.insertedId
             });
     } catch(error) {
         return res.status(500).json({
@@ -253,26 +246,20 @@ router.post('/', async(req,res) => {
  *       500:
  *         description: Database insertion failed.
  */
-router.put('/:id', async(req,res) => {
+router.put('/:id', validateTeam, async(req,res) => {
     const {id}=req.params;
-    const {team_name, country_code, confederation, rank, stats, key_players, active} = req.body;
-
-    //Validate input
-    if(!team_name || !country_code || !confederation || !rank || !stats || !key_players || !active){
-        return res.status(400).json({
-            error: 'All fields (team_name, country_code, confederation, rank, stats, key_players, active) are required.'
-        });
+    
+    if(!ObjectId.isValid(id)){
+        return res.status(400).json({error: 'Invalid ID format'})
     }
-
+    
     try {
         //calls the teams collection
         const teamsCollection = getCollection('fifa_teams');
-        //Assemble the updated fields
-        const updateTeam = { team_name, country_code, confederation, rank, stats, key_players, active};
-        //updates the document in the MOngoDB collection using its id
+        //updates the document in the MOngoDB collection using its id after validation
         const result = await teamsCollection.updateOne(
             {_id: new ObjectId(id)},
-            {$set: updateTeam}
+            {$set: req.body}
         );
         //check if document was found
         if(result.matchedCount === 0){
@@ -314,6 +301,10 @@ router.put('/:id', async(req,res) => {
 router.delete('/:id', async(req,res) => {
     const {id}=req.params;
     
+    if(!ObjectId.isValid(id)){
+        return res.status(400).json({error: 'Invalid ID format'});
+    }
+
     try {
         //calls the contacts collection
         const teamsCollection = getCollection('fifa_teams');

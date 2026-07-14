@@ -1,5 +1,5 @@
 const dns = require("node:dns");
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 require('dotenv').config();
 const express = require('express');
@@ -15,6 +15,15 @@ const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
+app.use((err, req, res, next) => {
+  if(err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      error: 'Invalid JSON payload format.',
+      details: err.message
+    });
+  }
+  next();
+});
 
 
 /*****************************************************************************************

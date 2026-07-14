@@ -1,6 +1,7 @@
 const express = require('express');
 const {ObjectId} = require('mongodb');
 const{getCollection} = require('../config/db');
+const {validateBook} = require('../middleware/validateBook');
 const router = express.Router();
 
 
@@ -73,7 +74,7 @@ router.get('/:id', async (req, res) => {
         const singleBook = await collection.findOne({ _id: bookId });
         
         if (!singleBook) {
-            return res.status(404).send("Contact not found.");
+            return res.status(404).send("Book not found.");
         }
         
         res.json(singleBook);
@@ -144,35 +145,17 @@ router.get('/:id', async (req, res) => {
  *       500:
  *         description: Database insertion failed.
  */
-router.post('/', async(req,res) => {
-    const { 
-        title, 
-        author, 
-        published_year, 
-        genres, 
-        isbn, 
-        stock
-    } = req.body;
-
-
-    //Validate input
-    if(!title || !author || !published_year || !genres || !isbn || !stock){
-        return res.status(400).json({
-            error: 'All fields (title, author, published_year, genres, isbn, stock) are required.'
-        });
-    }
-
+router.post('/', validateBook, async(req,res) => {
+    
     try {
         //calls the books collection
         const booksCollection = getCollection('books');
-        //Assemble the new docuiment
-        const newBook = { title, author, published_year, genres, isbn, stock};
-        //inserts the new document in the MongoDB collection
-        const result = await booksCollection.insertOne(newBook);
+        //inserts the new document in the MongoDB collection after validation
+        const result = await booksCollection.insertOne(req.body);
         //returns the id of the new document
         return res.status(201).json({ 
             message: 'New book record created.', 
-            id: newBook._id
+            id: result.insertedId
         });
     } catch(error) {
         return res.status(500).json({
@@ -252,40 +235,21 @@ router.post('/', async(req,res) => {
  *       500:
  *         description: Database insertion failed.
  */
-router.put('/:id', async(req,res) => {
+router.put('/:id', validateBook, async(req,res) => {
     const {id}=req.params;
-    const {
-        title, 
-        author, 
-        published_year, 
-        genres, 
-        isbn, 
-        stock
-    } = req.body;
 
-    //Validate input
-    if(!title || !author || !published_year || !genres || !isbn || !stock){
-        return res.status(400).json({
-            error: 'All fields (title, author, published_year, genres, isbn, stock) are required.'
-        });
+    if(!ObjectId.isValid(id)){
+        return res.status(400).json({error: 'Invalid ID format.'});
     }
 
     try {
         //calls the books collexction
         const booksCollection = getCollection('books');
-        //Assemble the updated fields
-        const updateBook = { 
-            title,
-            author,
-            published_year,
-            genres,
-            isbn,
-            stock
-        };
-        //updates the document in the MongoDB collection using its id
+        
+        //updates the document in the MongoDB collection using its id after validation
         const result = await booksCollection.updateOne(
             {_id: new ObjectId(id)},
-            {$set: updateBook}
+            {$set: req.body}
         );
         //check if document was found
         if(result.matchedCount === 0){
@@ -326,6 +290,10 @@ router.put('/:id', async(req,res) => {
  */
 router.delete('/:id', async(req,res) => {
     const {id}=req.params;
+
+    if(!ObjectId.isValid(id)){
+        return res.status(400).json({error: 'Invalid ID format'});
+    }
     
     try {
         //calls the books collection
@@ -337,10 +305,10 @@ router.delete('/:id', async(req,res) => {
         );
         //check if document was found
         if(result.deletedCount === 0){
-            return res.status(404).json({error: 'Contact not found'});
+            return res.status(404).json({error: 'Book not found'});
         }
         //returns 200 sucess message
-        return res.status(200).json({ message: 'Contact deleted successfully.' }); 
+        return res.status(200).json({ message: 'Book deleted successfully.' }); 
     } catch(error) {
         return res.status(500).json({error: 'Database saving failed.', details: error.message})
     }
