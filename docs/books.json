@@ -1,0 +1,140 @@
+{
+  "/books": {
+    "get": {
+      "tags": ["Books"],
+      "summary": "Get all books",
+      "description": "Retrieve a standard array of all book documents from the database.",
+      "responses": {
+        "200": { "description": "A list of books." },
+        "500": { "description": "Database error." }
+      }
+    },
+    "post": {
+      "tags": ["Books"],
+      "summary": "Create a new book",
+      "description": "Inserts a new document into the MongoDB collection. Requires authentication.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["title", "author", "published_year", "genres", "isbn", "stock"],
+              "properties": {
+                "title": { "type": "string", "example": "Dune" },
+                "author": { "type": "string", "example": "Frank Herbert" },
+                "published_year": { "type": "integer", "example": 1965 },
+                "genres": { "type": "array", "items": { "type": "string" }, "example": ["Sci-Fi", "Adventure", "Epic"] },
+                "isbn": { "type": "string", "example": "9780441172719" },
+                "stock": {
+                  "type": "object",
+                  "required": ["available", "location"],
+                  "properties": {
+                    "available": { "type": "integer", "example": 14 },
+                    "location": { "type": "string", "example": "Aisle 5" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": { "description": "Book created successfully." },
+        "400": { "description": "Missing required fields or invalid payload parameters." },
+        "401": { "description": "Unauthorized. GitHub login required." },
+        "500": { "description": "Database insertion failed." }
+      }
+    }
+  },
+  "/books/{id}": {
+    "get": {
+      "tags": ["Books"],
+      "summary": "Get a single book by ID",
+      "description": "Search the database for a matching unique _id record.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "The unique MongoDB Object ID"
+        }
+      ],
+      "responses": {
+        "200": { "description": "Book object found." },
+        "404": { "description": "Book not found." },
+        "500": { "description": "Invalid ID format or server error." }
+      }
+    },
+    "put": {
+      "tags": ["Books"],
+      "summary": "Update book record",
+      "description": "Updates a book document in the MongoDB collection. Requires authentication.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "The unique 24-character MongoDB ObjectId of the book",
+          "example": "6a551bc0cd1b72630dbfbf12"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["title", "author", "published_year", "genres", "isbn", "stock"],
+              "properties": {
+                "title": { "type": "string", "example": "Dune" },
+                "author": { "type": "string", "example": "Frank Herbert" },
+                "published_year": { "type": "integer", "example": 1965 },
+                "genres": { "type": "array", "items": { "type": "string" }, "example": ["Sci-Fi", "Adventure", "Epic"] },
+                "isbn": { "type": "string", "example": "9780441172719" },
+                "stock": {
+                  "type": "object",
+                  "required": ["available", "location"],
+                  "properties": {
+                    "available": { "type": "integer", "example": 14 },
+                    "location": { "type": "string", "example": "Aisle 5" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": { "description": "Book updated successfully." },
+        "400": { "description": "Invalid ID format or missing required fields." },
+        "401": { "description": "Unauthorized. GitHub login required." },
+        "500": { "description": "Database update failed." }
+      }
+    },
+    "delete": {
+      "tags": ["Books"],
+      "summary": "Delete a book record by ID",
+      "description": "Permanently deletes a book document from the MongoDB collection. Requires authentication.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "The unique 24-character MongoDB ObjectId of the book to delete",
+          "example": "6a551bc0cd1b72630dbfbf12"
+        }
+      ],
+      "responses": {
+        "200": { "description": "Book successfully deleted." },
+        "400": { "description": "Invalid ID format." },
+        "401": { "description": "Unauthorized. GitHub login required." },
+        "404": { "description": "Book record not found." },
+        "500": { "description": "Database deletion failed." }
+      }
+    }
+  }
+}

@@ -1,69 +1,46 @@
+//Solves DNS issues
 const dns = require("node:dns");
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
+//Libraries needed
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const session = require('express-session');
+
+//Modular settings
+const { initAuth } = require('./middleware/auth-setup');
+const { setupSwagger } = require('./config/swagger');
 const { connectDB } = require('./config/db');
+
+//Error handling middleware
+const { handleInvalidJson} = require('./middleware/errorHandler');
+
+//Routes objects
+const authroute = require('./routes/auth');
 const booksRoute = require('./routes/books');
 const teamsRoute = require('./routes/teams');
-const swaggerUi = require('swagger-ui-express');
-const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
-app.use((err, req, res, next) => {
-  if(err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    return res.status(400).json({
-      error: 'Invalid JSON payload format.',
-      details: err.message
-    });
-  }
-  next();
-});
 
+//Apply JSON error handling middleware
+app.use(handleInvalidJson);
 
-/*****************************************************************************************
- * *******************************Swagger Configuration***********************************
- ****************************************************************************************/
+//Initializa authentication modules (session + passport)
+initAuth(app);
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Contacts API',
-      version: '1.0.0',
-      description: 'Interactive API documentation for managing contacts',
-    },
-     
-    tags: [
-      {
-        name: 'Books',
-        description: 'Operations and endpoints related to managing the book inventory'
-      },
-      {
-        name: 'FIFA Teams',
-        description: 'Operations and endpoints related to managing top national football teams'
-      }
-    ],
-    servers: [
-      {
-        url: '/', // It forces Swagger to dynamically use whatever domain the app is currently running on
-        description: 'Current enviroment',
-      },
-    ],
-  },
-  apis: ['./routes/*.js'], // Points to the routes folder. Adjust if your folder setup is different!
-};
+//Initialize documentation modules
+setupSwagger(app);
 
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
+//Application endpoint mappings
+app.use('/auth', authroute);//connects /auth/github, /auth/github/callback, etc
 app.use('/books', booksRoute);
 app.use('/teams', teamsRoute);
+
 //Start Server
 async function startServer() {
     try {

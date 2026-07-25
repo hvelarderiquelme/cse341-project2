@@ -3,6 +3,9 @@ const {ObjectId} = require('mongodb');
 const{getCollection} = require('../config/db');
 const {validateTeam} = require('../middleware/validateTeam');
 const router = express.Router();
+const {requireAuth} = require('../middleware/requireAuth');
+const { teamValidationRules } = require('../middleware/teamValidationRules');
+const { validatePayload } = require('../middleware/validate');
 
 
 /*****************************************************************
@@ -11,20 +14,6 @@ const router = express.Router();
 
 
 //Endpoint: Get All contacts, type http://localhost:8080/teams in the url box
-/**
- * @openapi
- * /teams:
- *   get:
- *     tags:
- *      - FIFA Teams
- *     summary: Get all teams
- *     description: Retrieve a standard array of all team documents from the database.
- *     responses:
- *       200:
- *         description: A list of contacts.
- *       500:
- *         description: Database error.
- */
 router.get('/', async(req,res) => {
     try{
         //for my collection
@@ -41,29 +30,7 @@ router.get('/', async(req,res) => {
 
 // Endpoint: GET ONE single team by its unique ID. 
 // Type http://localhost:8080/teams/{any id from the database}
-/**
- * @openapi
- * /teams/{id}:
- *   get:
- *     tags:
- *      - FIFA Teams
- *     summary: Get a single team by ID
- *     description: Search the database for a matching unique _id record.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique MongoDB Object ID
- *     responses:
- *       200:
- *         description: Contact object found.
- *       404:
- *         description: Contact not found.
- *       500:
- *         description: Invalid ID format.
- */
+
 router.get('/:id', async (req, res) => {
     try {
         const collection = getCollection('fifa_teams');
@@ -87,70 +54,13 @@ router.get('/:id', async (req, res) => {
 /**************************************************************************
  * **************************  POST ROUTES*********************************
  * ************************************************************************/
-/**
- * @openapi
- * /teams:
- *   post:
- *     tags:
- *      - FIFA Teams
- *     summary: Create a new team
- *     description: Inserts a new document into the MongoDB collection.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - team_name
- *               - country_code
- *               - confederation
- *               - rank
- *               - stats
- *               - key_players
- *               - active
- *             properties:
- *               team_name:
- *                 type: string
- *                 example: "Egypt"
- *               country_code:
- *                 type: string
- *                 example: "EGY"
- *               confederation:
- *                 type: string
- *                 example: "CAF"
- *               rank:
- *                 type: integer
- *                 example: 24
- *               stats:
- *                 type: object
- *                 required:
- *                  - points
- *                  - previous_rank
- *                 properties:
- *                  points:
- *                      type: number
- *                      example: 1597.04
- *                  previous_rank:
- *                      type: integer
- *                      example: 29
- *               key_players:
- *                 type: array
- *                 items:
- *                  type: string
- *                 example: ["Mohamed Salah", "Omar Marmoush", "Mostafa Mohamed"]
- *               active:
- *                 type: boolean
- *                 example: true
- *     responses:
- *       201:
- *         description: Team created successfully.
- *       400:
- *         description: Missing required fields.
- *       500:
- *         description: Database insertion failed.
- */
-router.post('/', validateTeam, async(req,res) => {
+
+//Endpoint: Create a new team record
+router.post('/',
+    requireAuth,
+    teamValidationRules,
+    validatePayload,
+    async(req,res) => {
     
     try {
         //calls the teams collection
@@ -175,79 +85,14 @@ router.post('/', validateTeam, async(req,res) => {
 // /**************************************************************************
 //  * **************************  PUT ROUTES*********************************
 //  * ************************************************************************/
-/**
- * @openapi
- * /teams/{id}:
- *   put:
- *     tags:
- *      - FIFA Teams
- *     summary: Update team record
- *     description: Updates document in the MongoDB collection.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique 24-character MongoDB ObjectId of the book
- *         example: "6a551bc0cd1b72630dbfbf12"
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - team_name
- *               - country_code
- *               - confederation
- *               - rank
- *               - stats
- *               - key_players
- *               - active
- *             properties:
- *               team_name:
- *                 type: string
- *                 example: "Egypt"
- *               country_code:
- *                 type: string
- *                 example: "EGY"
- *               confederation:
- *                 type: string
- *                 example: "CAF"
- *               rank:
- *                 type: integer
- *                 example: 24
- *               stats:
- *                 type: object
- *                 required:
- *                  - points
- *                  - previous_rank
- *                 properties:
- *                  points:
- *                      type: number
- *                      example: 1597.04
- *                  previous_rank:
- *                      type: integer
- *                      example: 29
- *               key_players:
- *                 type: array
- *                 items:
- *                  type: string
- *                 example: ["Mohamed Salah", "Omar Marmoush", "Mostafa Mohamed"]
- *               active:
- *                 type: boolean
- *                 example: true
- *     responses:
- *       201:
- *         description: Team created successfully.
- *       400:
- *         description: Missing required fields.
- *       500:
- *         description: Database insertion failed.
- */
-router.put('/:id', validateTeam, async(req,res) => {
-    const {id}=req.params;
+
+//Endpoint: Update a team record by ID
+router.put('/:id',
+    requireAuth,
+    teamValidationRules,
+    validatePayload,
+    async(req,res) => {
+    const {id} = req.params;
     
     if(!ObjectId.isValid(id)){
         return res.status(400).json({error: 'Invalid ID format'})
@@ -275,30 +120,9 @@ router.put('/:id', validateTeam, async(req,res) => {
 // /**************************************************************************
 //  * **************************  DELETE ROUTES*********************************
 //  * ************************************************************************/
-/**
- * @openapi
- * /teams/{id}:
- *   delete:
- *     tags:
- *      - FIFA Teams
- *     summary: Delete a team from database
- *     description: Deletes a document from the MongoDB collection using its ID.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique MongoDB Object ID to delete
- *     responses:
- *       200:
- *         description: Contact deleted successfully.
- *       404:
- *         description: Contact not found.
- *       500:
- *         description: Database deletion failed.
- */
-router.delete('/:id', async(req,res) => {
+
+//Endpoint: Delete a record by ID
+router.delete('/:id', requireAuth, async(req,res) => {
     const {id}=req.params;
     
     if(!ObjectId.isValid(id)){

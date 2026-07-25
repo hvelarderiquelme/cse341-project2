@@ -1,29 +1,17 @@
 const express = require('express');
-const {ObjectId} = require('mongodb');
-const{getCollection} = require('../config/db');
-const {validateBook} = require('../middleware/validateBook');
+const { ObjectId } = require('mongodb');
+const{ getCollection } = require('../config/db');
+const { validateBook } = require('../middleware/validateBook');
 const router = express.Router();
+const { requireAuth } = require('../middleware/requireAuth');
+const { bookValidationRules } = require('../middleware/bookValidationRules');
+const { validatePayload } = require('../middleware/validate');
 
 
 /*****************************************************************
  * ********************   GET ROUTES   ***************************
 ******************************************************************/
-
-//Endpoint: Get All books, type http://localhost:8080/books in the url box
-/**
- * @openapi
- * /books:
- *   get:
- *     tags:
- *      - Books
- *     summary: Get all books
- *     description: Retrieve a standard array of all book documents from the database.
- *     responses:
- *       200:
- *         description: A list of contacts.
- *       500:
- *         description: Database error.
- */
+//Endpoint: Get all books
 router.get('/', async(req,res) => {
     try{
         //for my books collection
@@ -38,31 +26,9 @@ router.get('/', async(req,res) => {
 });
 
 
-// // Endpoint: GET ONE single contact by its unique ID. 
-// // Type http://localhost:8080/books/{any id from the database}
-/**
- * @openapi
- * /books/{id}:
- *   get:
- *     tags:
- *      - Books
- *     summary: Get a single book by ID
- *     description: Search the database for a matching unique _id record.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique MongoDB Object ID
- *     responses:
- *       200:
- *         description: Contact object found.
- *       404:
- *         description: Contact not found.
- *       500:
- *         description: Invalid ID format.
- */
+// Endpoint: GET ONE single contact by its unique ID. 
+// Type http://localhost:8080/books/{any id from the database}
+
 router.get('/:id', async (req, res) => {
     try {
         const collection = getCollection('books');
@@ -86,66 +52,13 @@ router.get('/:id', async (req, res) => {
 /**************************************************************************
  * **************************  POST ROUTES*********************************
  * ************************************************************************/
-/**
- * @openapi
- * /books:
- *   post:
- *     tags:
- *      - Books
- *     summary: Create a new book
- *     description: Inserts a new document into the MongoDB collection.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *              - title
- *              - author
- *              - published_year
- *              - genres 
- *              - isbn
- *              - stock
- *             properties:
- *               title:
- *                 type: string
- *                 example: "Dune"
- *               author:
- *                 type: string
- *                 example: "Frank Herbert"
- *               published_year:
- *                 type: integer
- *                 example: 1965
- *               genres:
- *                 type: array
- *                 items:
- *                  type: string
- *                 example: ["Sci-Fi", "Adventure", "Epic"]
- *               isbn:
- *                 type: string
- *                 example: "9780441172719"
- *               stock:
- *                 type: object
- *                 required:
- *                  - available
- *                  - location
- *                 properties:
- *                  available:
- *                      type: integer
- *                      example: 14
- *                  location:
- *                      type: string
- *                      example: "Aisle 5"
- *     responses:
- *       201:
- *         description: Contact created successfully.
- *       400:
- *         description: Missing required fields.
- *       500:
- *         description: Database insertion failed.
- */
-router.post('/', validateBook, async(req,res) => {
+
+//Endpoint: Create a new book
+router.post('/',
+    requireAuth,
+    bookValidationRules,
+    validatePayload,
+    async(req,res) => {
     
     try {
         //calls the books collection
@@ -168,74 +81,13 @@ router.post('/', validateBook, async(req,res) => {
 /**************************************************************************
  * **************************  PUT ROUTES*********************************
  * ************************************************************************/
-/**
- * @openapi
- * /books/{id}:
- *   put:
- *     tags:
- *      - Books
- *     summary: Update book record
- *     description: Updates book document in the MongoDB collection.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique 24-character MongoDB ObjectId of the book
- *         example: "6a551bc0cd1b72630dbfbf12"
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *              - title
- *              - author
- *              - published_year
- *              - genres 
- *              - isbn
- *              - stock
- *             properties:
- *               title:
- *                 type: string
- *                 example: "Dune"
- *               author:
- *                 type: string
- *                 example: "Frank Herbert"
- *               published_year:
- *                 type: integer
- *                 example: 1965
- *               genres:
- *                 type: array
- *                 items:
- *                  type: string
- *                 example: ["Sci-Fi", "Adventure", "Epic"]
- *               isbn:
- *                 type: string
- *                 example: "9780441172719"
- *               stock:
- *                 type: object
- *                 required:
- *                  - available
- *                  - location
- *                 properties:
- *                  available:
- *                      type: integer
- *                      example: 14
- *                  location:
- *                      type: string
- *                      example: "Aisle 5"
- *     responses:
- *       201:
- *         description: Contact updated successfully.
- *       400:
- *         description: Missing required fields.
- *       500:
- *         description: Database insertion failed.
- */
-router.put('/:id', validateBook, async(req,res) => {
+
+//Endpoint: Update a book record
+router.put('/:id', 
+    requireAuth,
+    bookValidationRules,
+    validatePayload,
+    async(req,res) => {
     const {id}=req.params;
 
     if(!ObjectId.isValid(id)){
@@ -265,30 +117,9 @@ router.put('/:id', validateBook, async(req,res) => {
 /**************************************************************************
  * **************************  DELETE ROUTES*********************************
  * ************************************************************************/
-/**
- * @openapi
- * /books/{id}:
- *   delete:
- *     tags:
- *      - Books
- *     summary: Delete a book from database
- *     description: Deletes a document from the MongoDB collection using its ID.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique MongoDB Object ID to delete
- *     responses:
- *       200:
- *         description: Contact deleted successfully.
- *       404:
- *         description: Contact not found.
- *       500:
- *         description: Database deletion failed.
- */
-router.delete('/:id', async(req,res) => {
+
+//Endpoint: Delete a book by ID
+router.delete('/:id', requireAuth, async(req,res) => {
     const {id}=req.params;
 
     if(!ObjectId.isValid(id)){

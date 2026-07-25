@@ -1,0 +1,142 @@
+{
+  "/teams": {
+    "get": {
+      "tags": ["FIFA Teams"],
+      "summary": "Get all teams",
+      "description": "Retrieve a standard array of all team documents from the database.",
+      "responses": {
+        "200": { "description": "A list of FIFA teams." },
+        "500": { "description": "Database error." }
+      }
+    },
+    "post": {
+      "tags": ["FIFA Teams"],
+      "summary": "Create a new team",
+      "description": "Inserts a new document into the MongoDB collection. Requires authentication.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["team_name", "country_code", "confederation", "rank", "stats", "key_players", "active"],
+              "properties": {
+                "team_name": { "type": "string", "example": "Egypt" },
+                "country_code": { "type": "string", "example": "EGY" },
+                "confederation": { "type": "string", "example": "CAF" },
+                "rank": { "type": "integer", "example": 24 },
+                "stats": {
+                  "type": "object",
+                  "required": ["points", "previous_rank"],
+                  "properties": {
+                    "points": { "type": "number", "example": 1597.04 },
+                    "previous_rank": { "type": "integer", "example": 29 }
+                  }
+                },
+                "key_players": { "type": "array", "items": { "type": "string" }, "example": ["Mohamed Salah", "Omar Marmoush", "Mostafa Mohamed"] },
+                "active": { "type": "boolean", "example": true }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": { "description": "Team created successfully." },
+        "400": { "description": "Missing required fields or invalid payload parameters." },
+        "401": { "description": "Unauthorized. GitHub login required." },
+        "500": { "description": "Database insertion failed." }
+      }
+    }
+  },
+  "/teams/{id}": {
+    "get": {
+      "tags": ["FIFA Teams"],
+      "summary": "Get a single team by ID",
+      "description": "Search the database for a matching unique _id record.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "The unique MongoDB Object ID"
+        }
+      ],
+      "responses": {
+        "200": { "description": "Team object found." },
+        "404": { "description": "Team not found." },
+        "500": { "description": "Invalid ID format or server error." }
+      }
+    },
+    "put": {
+      "tags": ["FIFA Teams"],
+      "summary": "Update team record",
+      "description": "Updates a team document in the MongoDB collection. Requires authentication.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "The unique 24-character MongoDB ObjectId of the team",
+          "example": "6a551bc0cd1b72630dbfbf12"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["team_name", "country_code", "confederation", "rank", "stats", "key_players", "active"],
+              "properties": {
+                "team_name": { "type": "string", "example": "Egypt" },
+                "country_code": { "type": "string", "example": "EGY" },
+                "confederation": { "type": "string", "example": "CAF" },
+                "rank": { "type": "integer", "example": 24 },
+                "stats": {
+                  "type": "object",
+                  "required": ["points", "previous_rank"],
+                  "properties": {
+                    "points": { "type": "number", "example": 1597.04 },
+                    "previous_rank": { "type": "integer", "example": 29 }
+                  }
+                },
+                "key_players": { "type": "array", "items": { "type": "string" }, "example": ["Mohamed Salah", "Omar Marmoush", "Mostafa Mohamed"] },
+                "active": { "type": "boolean", "example": true }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": { "description": "Team updated successfully." },
+        "400": { "description": "Invalid ID format or missing required fields." },
+        "401": { "description": "Unauthorized. GitHub login required." },
+        "500": { "description": "Database update failed." }
+      }
+    },
+    "delete": {
+      "tags": ["FIFA Teams"],
+      "summary": "Delete a team record by ID",
+      "description": "Permanently deletes a team document from the MongoDB collection. Requires authentication.",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "The unique 24-character MongoDB ObjectId of the team to delete",
+          "example": "6a551bc0cd1b72630dbfbf12"
+        }
+      ],
+      "responses": {
+        "200": { "description": "Team successfully deleted." },
+        "400": { "description": "Invalid ID format." },
+        "401": { "description": "Unauthorized. GitHub login required." },
+        "404": { "description": "Team record not found." },
+        "500": { "description": "Database deletion failed." }
+      }
+    }
+  }
+}
